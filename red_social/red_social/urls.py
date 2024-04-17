@@ -20,4 +20,5 @@ from django.urls import path
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('aficionado/', crear_aficionado, name='crear_aficionado'),
+    path('session/', login, username='login')
 ]
