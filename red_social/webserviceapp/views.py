@@ -1,46 +1,43 @@
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseConflict
+from django.http import JsonResponse, HttpResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from django.contrib.auth.hashers import make_password
-from .models import Aficionado, Equipos, Aficionado, Comentarios
+from .models import Aficionados, Equipos, Contenido, Comentarios
 import json
 
 @csrf_exempt
-def crear_aficionado(request):
-    if request.method == 'POST':
+def logout(request):
+    if request.method == 'PATCH':
         try:
-            # Recuperar los datos de la solicitud de crear usuario
+            # Recuperar el token de sesión del cuerpo de la solicitud
             data = json.loads(request.body)
+            session_token = data.get('sessionToken')
 
-            # Verificar si ya existe un usuario con el mismo email
-            if Usuario.objects.filter(Gmail=data['gmail']).exists():
-                return HttpResponseConflict('Ya existe un usuario con ese email', content_type='text/plain')
+            # Verificar si se proporcionó un token de sesión válido
+            if not session_token:
+                return HttpResponseBadRequest('Falta el token de sesión en la solicitud', content_type='text/plain')
 
-            # Crear un nuevo aficionado
-            with transaction.atomic():
-                nuevo_aficionado = Usuario(
-                    Id_aficionado=data['id_aficionado'],
-                    Username=data['username'],
-                    Password=make_password(data['password']),
-                    Gmail=data['gmail'],
-                    birthDate=data['birthDate'],
-                    sessiontoken='',
-                    url_avatar=data['avatarurl']
-                )
-                nuevo_aficionado.save()
+            # Buscar al aficionado con el token de sesión proporcionado
+            aficionado = Aficionado.objects.get(Token_Sesion=session_token)
 
-            return JsonResponse({'mensaje': 'Aficionado creado exitosamente'}, status=201)
+            # Limpiar el token de sesión del aficionado para cerrar la sesión
+            aficionado.Token_Sesion = None
+            aficionado.save()
 
-        except KeyError:
-            # Faltan parámetros en la solicitud
-            return HttpResponseBadRequest('Faltan parámetros o son incorrectos', content_type='text/plain')
+            # Devolver una respuesta indicando que la sesión se ha cerrado correctamente
+            return JsonResponse({'message': 'Sesión cerrada correctamente'}, status=200)
+
+        except aficionado.DoesNotExist:
+            # Manejar el caso en el que no se encuentra al aficionado con el token de sesión proporcionado
+            return HttpResponseUnauthorized('Token de sesión no válido', content_type='text/plain')
 
         except Exception as e:
-            # Otros errores
+            # Manejar otros errores
             return JsonResponse({'error': str(e)}, status=400)
 
     else:
         # Método no permitido
         return JsonResponse({'error': 'Método no permitido'}, status=405)
+
 
