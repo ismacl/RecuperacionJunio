@@ -20,5 +20,5 @@ from webserviceapp.views import crear_aficionado
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('session/' , logout, name='logout'),
+    path('users/<str:username>/', username, name='username'),
 ]
