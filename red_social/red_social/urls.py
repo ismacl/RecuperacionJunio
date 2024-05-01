@@ -20,5 +20,5 @@ from webserviceapp.views import crear_aficionado
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('aficionado/<int:id_aficionado>/equipos/', obtener_equipos_seguidos, name='equipos_seguidos'),
+    path('equipos/', crear_equipo, name='crear_equipo'),
 ]
