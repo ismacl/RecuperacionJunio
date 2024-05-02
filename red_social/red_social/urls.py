@@ -20,4 +20,9 @@ from webserviceapp.views import crear_aficionado
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+<<<<<<< HEAD
+=======
+    path('aficionado/', crear_aficionado, name='crear_aficionado'),
+    path('session/', login, username='login')
+>>>>>>> endpoint2
 ]
