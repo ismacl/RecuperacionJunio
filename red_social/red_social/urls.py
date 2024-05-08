@@ -19,5 +19,5 @@ from django.urls import path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('aficionado/', crear_aficionado, name='crear_aficionado'),
+    path('agregar_comentario/', views.agregar_comentario, name='agregar_comentario'),
 ]
