@@ -7,29 +7,46 @@ from .models import Aficionados, Equipos, Contenido, Comentarios
 import json
 
 @csrf_exempt
-def comentarios_contenido(request, id_contenido):
-    if request.method == 'GET':
+def agregar_contenido_aficionado(request):
+    if request.method == 'POST':
         try:
-            # Obtener los comentarios asociados al contenido
-            comentarios = Comentarios.objects.filter(Id_Contenido=id_contenido)
-            if not comentarios.exists():
-                return JsonResponse({'error': 'No hay comentarios para el contenido proporcionado.'}, status=404)
+            # Verificar si el token es válido (esta función debería estar definida y manejar la lógica de verificación de token)
+            error_response, token_payload = verificar_token(request)
+            if error_response:
+                return error_response
 
-            # Preparar la lista de comentarios
-            comentarios_info = [{
-                'id_comentario': comentario.id_Comentarios,
-                'id_aficionado': comentario.Id_aficionado.Id_aficionado,
-                'username': comentario.Id_aficionado.UserName,
-                'comentario': comentario.Comentario,
-                'fecha_comentario': comentario.Fecha_comentario,
-            } for comentario in comentarios]
+            # Verificar que el token pertenece al usuario
+            data = json.loads(request.body)
+            if token_payload['id_aficionado'] != data['id_aficionado']:
+                return JsonResponse({'error': 'No autorizado. El token no pertenece al usuario'}, status=401)
 
-            # Devolver la respuesta JSON con la lista de comentarios
-            return JsonResponse(comentarios_info, safe=False, status=200)
+            # Verificar que se proporcionaron todos los parámetros requeridos
+            required_fields = ['id_aficionado', 'tipo_contenido', 'url_contenido', 'descripcion']
+            if not all(field in data for field in required_fields):
+                return HttpResponseBadRequest('Faltan parámetros o son incorrectos')
 
-        except Comentarios.DoesNotExist:
-            # No se encontraron comentarios para el contenido con el ID proporcionado
-            return JsonResponse({'error': f'No existe un contenido con el ID {id_contenido}'}, status=404)
+            # Buscar al aficionado por el ID proporcionado
+            aficionado = Aficionado.objects.get(Id_aficionado=data['id_aficionado'])
+
+            # Crear el nuevo contenido
+            nuevo_contenido = Contenido(
+                Id_aficionado=aficionado,
+                Tipo_Contenido=data['tipo_contenido'],
+                URL=data['url_contenido'],
+                Descripcion=data['descripcion'],
+                Fecha_Publicacion=datetime.date.today()
+            )
+            nuevo_contenido.save()
+
+            # Devolver la respuesta con éxito
+            return JsonResponse({'message': 'Contenido creado exitosamente'}, status=201)
+
+        except Aficionado.DoesNotExist:
+            return JsonResponse({'error': 'Aficionado no encontrado'}, status=404)
+
+        except KeyError:
+            # Faltan parámetros en la solicitud
+            return HttpResponseBadRequest('Faltan parámetros o son incorrectos')
 
         except Exception as e:
             # Otros errores
