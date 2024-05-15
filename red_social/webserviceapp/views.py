@@ -7,41 +7,29 @@ from .models import Aficionados, Equipos, Contenido, Comentarios
 import json
 
 @csrf_exempt
-<<<<<<< HEAD
-
-=======
-def iniciar_sesion(request):
-    if request.method == 'POST':
+def comentarios_contenido(request, id_contenido):
+    if request.method == 'GET':
         try:
-            # Recuperar los datos del cuerpo de la solicitud
-            data = json.loads(request.body)
+            # Obtener los comentarios asociados al contenido
+            comentarios = Comentarios.objects.filter(Id_Contenido=id_contenido)
+            if not comentarios.exists():
+                return JsonResponse({'error': 'No hay comentarios para el contenido proporcionado.'}, status=404)
 
-            # Verificar si se proporcionaron los parámetros requeridos
-            if 'username' not in data or 'password' not in data:
-                return HttpResponseBadRequest('Faltan parámetros o son incorrectos', content_type='text/plain')
+            # Preparar la lista de comentarios
+            comentarios_info = [{
+                'id_comentario': comentario.id_Comentarios,
+                'id_aficionado': comentario.Id_aficionado.Id_aficionado,
+                'username': comentario.Id_aficionado.UserName,
+                'comentario': comentario.Comentario,
+                'fecha_comentario': comentario.Fecha_comentario,
+            } for comentario in comentarios]
 
-            # Buscar al usuario por el nombre de usuario proporcionado
-            aficionado = Aficionado.objects.get(Username=data['username'])
+            # Devolver la respuesta JSON con la lista de comentarios
+            return JsonResponse(comentarios_info, safe=False, status=200)
 
-            # Verificar si la contraseña es correcta
-            if not check_password(data['password'], aficionado.password):
-                return HttpResponse('Contraseña incorrecta', status=401,  content_type='text/plain')
-
-            # Generar un nuevo token de sesión y actualizar el usuario
-            nuevo_token_sesion = crear_token(id_aficionado)
-            usuario.token_sesion = nuevo_token_sesion
-            usuario.save()
-
-            # Devolver la respuesta con el token de sesión
-            datos_respuesta = {'token_sesion': nuevo_token_sesion}
-            return JsonResponse(datos_respuesta, status=201)
-
-        except Usuario.DoesNotExist:
-            return HttpResponseUnauthorized('Usuario no encontrado', content_type='text/plain')
-
-        except KeyError:
-            # Faltan parámetros en la solicitud
-            return HttpResponseBadRequest('Faltan parámetros o son incorrectos', content_type='text/plain')
+        except Comentarios.DoesNotExist:
+            # No se encontraron comentarios para el contenido con el ID proporcionado
+            return JsonResponse({'error': f'No existe un contenido con el ID {id_contenido}'}, status=404)
 
         except Exception as e:
             # Otros errores
@@ -50,4 +38,3 @@ def iniciar_sesion(request):
     else:
         # Método no permitido
         return JsonResponse({'error': 'Método no permitido'}, status=405)
->>>>>>> endpoint2

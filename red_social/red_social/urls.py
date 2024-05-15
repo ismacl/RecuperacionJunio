@@ -20,9 +20,5 @@ from webserviceapp.views import crear_aficionado
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-<<<<<<< HEAD
-=======
-    path('aficionado/', crear_aficionado, name='crear_aficionado'),
-    path('session/', login, username='login')
->>>>>>> endpoint2
+    path('contenido_aficionado/<int:id_contenido>/comentarios/', views.comentarios_contenido, name='comentarios_contenido'),
 ]
