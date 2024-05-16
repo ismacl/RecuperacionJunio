@@ -39,5 +39,3 @@ def logout(request):
     else:
         # Método no permitido
         return JsonResponse({'error': 'Método no permitido'}, status=405)
-
-
