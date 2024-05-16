@@ -7,9 +7,6 @@ from .models import Aficionados, Equipos, Contenido, Comentarios
 import json
 
 @csrf_exempt
-<<<<<<< HEAD
-
-=======
 def iniciar_sesion(request):
     if request.method == 'POST':
         try:
@@ -50,4 +47,3 @@ def iniciar_sesion(request):
     else:
         # Método no permitido
         return JsonResponse({'error': 'Método no permitido'}, status=405)
->>>>>>> endpoint2
