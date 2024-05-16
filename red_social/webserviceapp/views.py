@@ -36,6 +36,31 @@ def iniciar_sesion(request):
         except Usuario.DoesNotExist:
             return HttpResponseUnauthorized('Usuario no encontrado', content_type='text/plain')
 
+def crear_aficionado(request):
+    if request.method == 'POST':
+        try:
+            # Recuperar los datos de la solicitud de crear usuario
+            data = json.loads(request.body)
+
+            # Verificar si ya existe un usuario con el mismo email
+            if Usuario.objects.filter(email=data['email']).exists():
+                return HttpResponseConflict('Ya existe un usuario con ese email', content_type='text/plain')
+
+            # Crear un nuevo aficionado
+            with transaction.atomic():
+                nuevo_aficionado = Usuario(
+                    id_aficionado=data['id_aficionado'],
+                    username=data['username'],
+                    password=make_password(data['password']),
+                    email=data['email'],
+                    birthdate=data['birthdate'],
+                    Token_Sesion='',
+                    url_avatar=data['url_avatar']
+                )
+                nuevo_aficionado.save()
+
+            return JsonResponse({'mensaje': 'Aficionado creado exitosamente'}, status=201)
+
         except KeyError:
             # Faltan parámetros en la solicitud
             return HttpResponseBadRequest('Faltan parámetros o son incorrectos', content_type='text/plain')
