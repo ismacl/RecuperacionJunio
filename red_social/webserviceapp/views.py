@@ -7,7 +7,6 @@ from .models import Aficionados, Equipos, Contenido, Comentarios
 import json
 
 @csrf_exempt
-@csrf_exempt
 def eliminar_contenido(request, id_contenido):
     if request.method == 'DELETE':
         token = request.headers.get('SessionToken')
