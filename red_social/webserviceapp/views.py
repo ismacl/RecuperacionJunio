@@ -7,23 +7,47 @@ from .models import Aficionados, Equipos, Contenido, Comentarios
 import json
 
 @csrf_exempt
-@csrf_exempt
-def eliminar_contenido(request, id_contenido):
-    if request.method == 'DELETE':
-        token = request.headers.get('SessionToken')
+def buscar_equipos(request):
+    if request.method == 'GET':
+        # Recuperar los parámetros de la solicitud
+        equipo = request.GET.get('equipo')
+        liga = request.GET.get('liga')
+        pais = request.GET.get('pais')
+        año_fundacion = request.GET.get('año_fundacion')
+        estadio = request.GET.get('estadio')
+        url_equipo = request.GET.get('url_equipo')
 
-        # Verificación del token de sesión
-        try:
-            aficionado = Aficionado.objects.get(Token_Sesion=token)
-        except Aficionado.DoesNotExist:
-            return HttpResponseUnauthorized('No autorizado. Token de sesión inválido o no proporcionado.', content_type='text/plain')
+        # Construir el filtro dinámico
+        filtros = {}
+        if equipo:
+            filtros['Nombre'] = equipo
+        if liga:
+            filtros['Liga'] = liga
+        if pais:
+            filtros['Pais'] = pais
+        if año_fundacion:
+            filtros['Año_Fundacion'] = año_fundacion
+        if estadio:
+            filtros['Estadio'] = estadio
+        if url_equipo:
+            filtros['url_equipo'] = url_equipo
 
-        # Verificación del contenido
-        contenido = get_object_or_404(Contenido, pk=id_contenido, Id_aficionado=aficionado.Id_aficionado)
+        # Filtrar los equipos según los parámetros proporcionados
+        equipos = Equipos.objects.filter(**filtros)
+        
+        # Construir la respuesta
+        equipos_list = []
+        for equipo in equipos:
+            equipos_list.append({
+                "equipo": equipo.Nombre,
+                "liga": equipo.Liga,
+                "pais": equipo.Pais,
+                "año_fundacion": equipo.Año_Fundacion,
+                "estadio": equipo.Estadio,
+                "url_equipo": equipo.url_equipo,
+            })
 
-        # Eliminación del contenido
-        contenido.delete()
-        return JsonResponse({'message': 'Contenido eliminado exitosamente'}, status=200)
-
+        return JsonResponse(equipos_list, safe=False, status=200)
+    
     else:
         return JsonResponse({'error': 'Método no permitido'}, status=405)
