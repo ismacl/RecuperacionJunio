@@ -16,8 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from webserviceapp.views import agregar_comentario
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('agregar_comentario/', views.agregar_comentario, name='agregar_comentario'),
+    path('agregar_comentario/', agregar_comentario, name='agregar_comentario'),
 ]
