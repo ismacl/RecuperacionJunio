@@ -16,9 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from webserviceapp.views import crear_aficionado
+from webserviceapp.views import comentarios_contenido
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('contenido_aficionado/<int:id_contenido>/comentarios/', views.comentarios_contenido, name='comentarios_contenido'),
+    path('contenido_aficionado/<int:id_contenido>/comentarios/', comentarios_contenido, name='comentarios_contenido'),
 ]
