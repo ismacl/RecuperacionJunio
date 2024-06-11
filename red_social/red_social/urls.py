@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.urls import path
-from webserviceapp.views import crear_aficionado
+from webserviceapp.views import buscar_equipos
 
 urlpatterns = [
-    path('equipos/', views.buscar_equipos, name='buscar_equipos'),
+    path('equipos/', buscar_equipos, name='buscar_equipos'),
 ]
