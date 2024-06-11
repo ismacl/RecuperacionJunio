@@ -1,13 +1,13 @@
 from django.shortcuts import render
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponseConflict
+from django.http import JsonResponse, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from django.contrib.auth.hashers import make_password
-from .models import Aficionado, Equipos, Aficionado, Comentarios
+from .models import Aficionados, Equipos, Contenido, Comentarios
 import json
 
 @csrf_exempt
-def iniciar_sesion(request):
+def login(request):
     if request.method == 'POST':
         try:
             # Recuperar los datos del cuerpo de la solicitud

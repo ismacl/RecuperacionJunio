@@ -16,9 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from webserviceapp.views import login
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('aficionado/', crear_aficionado, name='crear_aficionado'),
-    path('session/', login, username='login')
+    path('session/', login)
 ]
