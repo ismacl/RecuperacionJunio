@@ -16,6 +16,17 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from webserviceapp.views import crear_aficionado
+from webserviceapp.views import login
+from webserviceapp.views import logout
+from webserviceapp.views import username
+from webserviceapp.views import obtener_equipos_seguidos
+from webserviceapp.views import crear_equipo
+from webserviceapp.views import agregar_comentario
+from webserviceapp.views import comentarios_contenido
+from webserviceapp.views import agregar_contenido_aficionado
+from webserviceapp.views import buscar_equipos
+
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,8 +36,8 @@ urlpatterns = [
     path('users/<str:username>/', username, name='username'),
     path('aficionado/<int:id_aficionado>/equipos/', obtener_equipos_seguidos, name='equipos_seguidos'),
     path('equipos/', crear_equipo, name='crear_equipo'),
-    path('agregar_comentario/', views.agregar_comentario, name='agregar_comentario'),
-    path('contenido_aficionado/<int:id_contenido>/comentarios/', views.comentarios_contenido, name='comentarios_contenido'),
-    path('contenido_aficionado/', views.agregar_contenido_aficionado, name='agregar_contenido_aficionado'),
-    path('equipos/', views.buscar_equipos, name='buscar_equipos'),
+    path('agregar_comentario/', agregar_comentario, name='agregar_comentario'),
+    path('contenido_aficionado/<int:id_contenido>/comentarios/', comentarios_contenido, name='comentarios_contenido'),
+    path('contenido_aficionado/', agregar_contenido_aficionado, name='agregar_contenido_aficionado'),
+    path('equipos/', buscar_equipos, name='buscar_equipos'),
 ]
