@@ -16,9 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from webserviceapp.views import crear_aficionado
+from webserviceapp.views import logout
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('session/' , logout, name='logout'),
+    path('session/' , logout),
 ]
