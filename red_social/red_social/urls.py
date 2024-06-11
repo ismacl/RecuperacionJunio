@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from webserviceapp.views import crear_aficionado
+from webserviceapp.views import crear_equipo
 
 urlpatterns = [
     path('admin/', admin.site.urls),
