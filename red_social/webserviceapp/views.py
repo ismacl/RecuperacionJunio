@@ -45,7 +45,7 @@ def crear_aficionado(request):
         return JsonResponse({'error': 'Método no permitido'}, status=405)
 
 @csrf_exempt
-def iniciar_sesion(request):
+def login(request):
     if request.method == 'POST':
         try:
             # Recuperar los datos del cuerpo de la solicitud

@@ -25,19 +25,21 @@ from webserviceapp.views import crear_equipo
 from webserviceapp.views import agregar_comentario
 from webserviceapp.views import comentarios_contenido
 from webserviceapp.views import agregar_contenido_aficionado
+from webserviceapp.views import eliminar_contenido
 from webserviceapp.views import buscar_equipos
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('aficionado/', crear_aficionado, name='crear_aficionado'),
-    path('session/', login, username='login'),
-    path('session/' , logout, name='logout'),
+    path('session/', login),
+    path('session/' , logout),
     path('users/<str:username>/', username, name='username'),
     path('aficionado/<int:id_aficionado>/equipos/', obtener_equipos_seguidos, name='equipos_seguidos'),
     path('equipos/', crear_equipo, name='crear_equipo'),
     path('agregar_comentario/', agregar_comentario, name='agregar_comentario'),
     path('contenido_aficionado/<int:id_contenido>/comentarios/', comentarios_contenido, name='comentarios_contenido'),
     path('contenido_aficionado/', agregar_contenido_aficionado, name='agregar_contenido_aficionado'),
+    path('eliminarContenido/', eliminar_contenido, name='eliminar_contenido'),
     path('equipos/', buscar_equipos, name='buscar_equipos'),
 ]
