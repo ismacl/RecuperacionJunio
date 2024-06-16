@@ -6,7 +6,7 @@
     <title>Login Usuario</title>
 </head>
 <?php
-    // Inicia una nueva sesión o reanuda la existente
+    // Inicia una nueva sesión
     session_start();
 
     if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -16,7 +16,7 @@
         // URL del endpoint de login
         $url = "http://localhost:8000/session/";
 
-        // Se crea un array con los datos del usuario
+        // Se crea un array
         $data = array(
             "username" => $_POST['username'],
             "password" => $_POST['password']

@@ -393,27 +393,27 @@ def eliminar_contenido(request, id_contenido):
 def buscar_equipos(request):
     if request.method == 'GET':
         # Recuperar los parámetros de la solicitud
-        equipo = request.GET.get('equipo')
-        liga = request.GET.get('liga')
-        pais = request.GET.get('pais')
-        año_fundacion = request.GET.get('año_fundacion')
-        estadio = request.GET.get('estadio')
-        url_equipo = request.GET.get('url_equipo')
+        equipo = request.GET.get('equipo', None)
+        liga = request.GET.get('liga', None)
+        pais = request.GET.get('pais', None)
+        año_fundacion = request.GET.get('año_fundacion', None)
+        estadio = request.GET.get('estadio', None)
+        url_equipo = request.GET.get('url_equipo', None)
 
         # Construir el filtro dinámico
         filtros = {}
         if equipo:
-            filtros['Nombre'] = equipo
+            filtros['nombre__icontains'] = equipo
         if liga:
-            filtros['Liga'] = liga
+            filtros['liga__icontains'] = liga
         if pais:
-            filtros['Pais'] = pais
+            filtros['pais__icontains'] = pais
         if año_fundacion:
-            filtros['Año_Fundacion'] = año_fundacion
+            filtros['año_fundacion'] = año_fundacion
         if estadio:
-            filtros['Estadio'] = estadio
+            filtros['estadio__icontains'] = estadio
         if url_equipo:
-            filtros['url_equipo'] = url_equipo
+            filtros['url_equipo__icontains'] = url_equipo
 
         # Filtrar los equipos según los parámetros proporcionados
         equipos = Equipos.objects.filter(**filtros)
