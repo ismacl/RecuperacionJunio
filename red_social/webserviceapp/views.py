@@ -26,7 +26,7 @@ def crear_token(user_id):
 # Verificar token
 
 def verificar_token(request):
-	token = request.headers.get('SessionToken', None)
+	token = request.META.get('HTTP_AUTHORIZATION', None)
 
 	if not token:
 		return JsonResponse({'error': 'Token no encontrado'}, status=401), None
@@ -50,8 +50,8 @@ def crear_aficionado(request):
             data = json.loads(request.body)
 
             # Verificar si ya existe un usuario con el mismo email
-            if nuevo_aficionado.objects.filter(email=data['email']).exists():
-                return HttpResponseConflict('Ya existe un usuario con ese email', content_type='text/plain')
+            if Aficionados.objects.filter(gmail=data['gmail']).exists():
+                return JsonResponse({'error': 'Ya existe un usuario'}, status="400")
 
             # Crear un nuevo aficionado
             with transaction.atomic():
@@ -59,9 +59,11 @@ def crear_aficionado(request):
                     id_aficionado=data['id_aficionado'],
                     username=data['username'],
                     password=make_password(data['password']),
-                    email=data['email'],
+                    gmail=data['gmail'],
                     birthdate=data['birthdate'],
-                    Token_Sesion='',
+                    token_sesion=None,
+                    registerdate=data['registerdate'],
+                    id_equipo=data['id_equipo'],
                     url_avatar=data['url_avatar']
                 )
                 nuevo_aficionado.save()
@@ -79,6 +81,7 @@ def crear_aficionado(request):
     else:
         # Método no permitido
         return JsonResponse({'error': 'Método no permitido'}, status=405)
+    
 
 @csrf_exempt
 def login(request):
@@ -92,14 +95,14 @@ def login(request):
                 return HttpResponseBadRequest('Faltan parámetros o son incorrectos', content_type='text/plain')
 
             # Buscar al usuario por el nombre de usuario proporcionado
-            aficionado = Aficionados.objects.get(Username=data['username'])
+            aficionado = Aficionados.objects.get(username=data['username'])
 
             # Verificar si la contraseña es correcta
             if not check_password(data['password'], aficionado.password):
                 return HttpResponse('Contraseña incorrecta', status=401,  content_type='text/plain')
 
             # Generar un nuevo token de sesión y actualizar el usuario
-            nuevo_token_sesion = crear_token(aficionado)
+            nuevo_token_sesion = crear_token(aficionado.id_aficionado)
             aficionado.token_sesion = nuevo_token_sesion
             aficionado.save()
 
@@ -127,15 +130,17 @@ def logout(request):
     if request.method == 'PATCH':
         try:
             # Recuperar el token de sesión del cuerpo de la solicitud
-            data = json.loads(request.body)
-            Token_Sesion = data.get('sessionToken')
+            Token_Sesion= request.META.get('HTTP_AUTHORIZATION', None)
 
             # Verificar si se proporcionó un token de sesión válido
             if not Token_Sesion:
                 return HttpResponseBadRequest('Falta el token de sesión en la solicitud', content_type='text/plain')
+                
+            if Token_Sesion.startswith('Bearer '):
+                Token_Sesion=Token_Sesion.split(' ')[1]
 
             # Buscar al aficionado con el token de sesión proporcionado
-            aficionado = Aficionados.objects.get(Token_Sesion=Token_Sesion)
+            aficionado = Aficionados.objects.get(token_sesion=Token_Sesion)
 
             # Limpiar el token de sesión del aficionado para cerrar la sesión
             aficionado.token_sesion = None
@@ -146,7 +151,7 @@ def logout(request):
 
         except aficionado.DoesNotExist:
             # Manejar el caso en el que no se encuentra al aficionado con el token de sesión proporcionado
-            return HttpResponseUnauthorized('Token de sesión no válido', content_type='text/plain')
+            return JsonResponse('Token de sesión no válido', content_type='text/plain')
 
         except Exception as e:
             # Manejar otros errores
@@ -186,20 +191,22 @@ def username(request, username):
 def obtener_equipos_seguidos(request, id_aficionado):
     try:
         aficionado = Aficionados.objects.get(id_aficionado=id_aficionado)
-        equipos_seguidos = aficionado.equipos.all()
+
+        id_equipo= aficionado.id_equipo
         
-        if equipos_seguidos:
-            data = []
-            for equipo in equipos_seguidos:
-                data.append({
+        if Equipos.objects.get(id_equipo=id_equipo):
+           equipo=Equipos.objects.get(id_equipo=id_equipo)
+           data = {
                     'equipo': equipo.nombre,
                     'liga': equipo.liga,
                     'pais': equipo.pais,
                     'año_fundacion': equipo.año_fundacion,
                     'estadio': equipo.estadio,
                     'url_equipo': equipo.url_equipo
-                })
-            return JsonResponse(data, status=200)
+            }
+           
+           return JsonResponse({'data': data})
+
         else:
             return JsonResponse({'error': 'No se encontraron equipos seguidos para este usuario'}, status=404)
     
@@ -220,6 +227,7 @@ def crear_equipo(request):
             # Crear un nuevo equipo
             nuevo_equipo = Equipos.objects.create(
                 nombre=data['equipo'],
+                id_equipo=data['id_equipo'],
                 liga=data['liga'],
                 pais=data['pais'],
                 año_fundacion=data['año_fundacion'],
@@ -243,19 +251,23 @@ def agregar_comentario(request):
             data = json.loads(request.body)
 
             # Verificar si se proporcionaron los parámetros requeridos
-            if 'id_aficionado' not in data or 'id_contenido' not in data or 'comentario' not in data or 'fecha_publicacion' not in data:
+            if 'id_aficionado' not in data or 'id_contenido' not in data or 'comentario' not in data or 'fecha_comentario' not in data:
                 return HttpResponseBadRequest('Faltan parámetros o son incorrectos', content_type='text/plain')
 
             # Verificar si el aficionado y el contenido existen
             if not Aficionados.objects.filter(id_aficionado=data['id_aficionado']).exists() or not Contenido.objects.filter(id_contenido=data['id_contenido']).exists():
                 return HttpResponseBadRequest('El aficionado o el contenido no existen', content_type='text/plain')
+            
+            id_contenido=Contenido.objects.get(id_contenido=data['id_contenido'])
+            id_aficionado=Aficionados.objects.get(id_aficionado=data['id_aficionado'])
 
             # Crear el comentario
             nuevo_comentario = Comentarios(
-                id_aficionado=data['id_aficionado'],
-                id_contenido=data['id_contenido'],
+                id_comentarios=data["id_comentarios"],
+                id_aficionado=id_aficionado,
+                id_contenido=id_contenido,
                 comentario=data['comentario'],
-                fecha_publicacion=datetime.strptime(data['fecha_publicacion'], '%d-%m-%Y').date()
+                fecha_comentario=data['fecha_comentario']
             )
             nuevo_comentario.save()
 
@@ -278,7 +290,7 @@ def comentarios_contenido(request, id_contenido):
     if request.method == 'GET':
         try:
             # Obtener los comentarios asociados al contenido
-            comentarios = Comentarios.objects.filter(Id_Contenido=id_contenido)
+            comentarios = Comentarios.objects.filter(id_contenido=id_contenido)
             if not comentarios.exists():
                 return JsonResponse({'error': 'No hay comentarios para el contenido proporcionado.'}, status=404)
 
@@ -317,24 +329,20 @@ def agregar_contenido_aficionado(request):
 
             # Verificar que el token pertenece al usuario
             data = json.loads(request.body)
-            if token_payload['id_aficionado'] != data['id_aficionado']:
+            print(token_payload['user_id'])
+            if token_payload['user_id'] != data['id_aficionado']:
                 return JsonResponse({'error': 'No autorizado. El token no pertenece al usuario'}, status=401)
 
-            # Verificar que se proporcionaron todos los parámetros requeridos
-            required_fields = ['id_aficionado', 'tipo_contenido', 'url_contenido', 'descripcion']
-            if not all(field in data for field in required_fields):
-                return HttpResponseBadRequest('Faltan parámetros o son incorrectos')
-
             # Buscar al aficionado por el ID proporcionado
-            aficionado = Aficionados.objects.get(Id_aficionado=data['id_aficionado'])
+            aficionado = Aficionados.objects.get(id_aficionado='1').id_aficionado
 
             # Crear el nuevo contenido
             nuevo_contenido = Contenido(
-                Id_aficionado=aficionado,
-                Tipo_Contenido=data['tipo_contenido'],
-                URL=data['url_contenido'],
-                Descripcion=data['descripcion'],
-                Fecha_Publicacion=datetime.date.today()
+                id_aficionado=aficionado,
+                tipo_contenido=data['tipo_contenido'],
+                url=data['url_contenido'],
+                descripcion=data['descripcion'],
+                fecha_publicacion=['fecha_publicacion']
             )
             nuevo_contenido.save()
 
@@ -359,13 +367,17 @@ def agregar_contenido_aficionado(request):
 @csrf_exempt
 def eliminar_contenido(request, id_contenido):
     if request.method == 'DELETE':
-        token = request.headers.get('Token_Sesion')
+        token = request.META.get('HTTP_AUTHORIZATION', None)
 
         # Verificación del token de sesión
+
+        if not token:
+            return JsonResponse({'error': 'Token de sesión no proporcionado'}, status=401)
+
         try:
             aficionado = Aficionados.objects.get(Token_Sesion=token)
         except Aficionados.DoesNotExist:
-            return HttpResponseUnauthorized('No autorizado. Token de sesión inválido o no proporcionado.', content_type='text/plain')
+            return JsonResponse('No autorizado. Token de sesión inválido o no proporcionado.', content_type='text/plain')
 
         # Verificación del contenido
         contenido = get_object_or_404(Contenido, pk=id_contenido, Id_aficionado=aficionado.id_aficionado)

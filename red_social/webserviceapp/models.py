@@ -12,11 +12,11 @@ class Aficionados(models.Model):
     id_aficionado = models.IntegerField(db_column='Id_aficionado', primary_key=True)  # Field name made lowercase.
     username = models.CharField(db_column='UserName', max_length=50)  # Field name made lowercase.
     gmail = models.CharField(db_column='Gmail', max_length=50)  # Field name made lowercase.
-    password = models.CharField(db_column='Password', max_length=10)  # Field name made lowercase.
+    password = models.CharField(max_length=100, blank=True, null=True)
     birthdate = models.DateField(db_column='birthDate')  # Field name made lowercase.
     registerdate = models.DateField(db_column='RegisterDate')  # Field name made lowercase.
     url_avatar = models.CharField(max_length=255, blank=True, null=True)
-    token_sesion = models.BigIntegerField(db_column='Token_Sesion', blank=True, null=True)  # Field name made lowercase.
+    token_sesion = models.CharField(db_column='Token_Sesion', max_length=500, blank=True, null=True)  # Field name made lowercase.
     id_equipo = models.IntegerField(db_column='Id_Equipo')  # Field name made lowercase.
 
     class Meta:
