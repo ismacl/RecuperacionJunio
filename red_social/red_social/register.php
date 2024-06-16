@@ -1,57 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Creación de Usuario</title>
+</head>
 <?php
-session_start();
+    // Inicia una nueva sesión o reanuda la existente
+    session_start();
 
-function registerAficionado($data) {
-    $url = 'http://localhost:8000/crear_aficionado/';
+    // Se inicia el CURL
     $ch = curl_init();
+
+    // URL del endpoint
+    $url = "http://localhost:8000/aficionado/";
+
+    // Se crea un array con los datos del usuario
+    $data = array(
+        "id_aficionado" => "1",
+        "username" => "luis_garcia",
+        "password" => "1234",
+        "gmail" => "luis.garcia@example.com",
+        "birthdate" => "1990-05-15",
+        "registerdate" => "1991-05-15",
+        "id_equipo" => "1",
+        "url_avatar" => "https://cdn-icons-png.flaticon.com/512/4792/4792929.png"
+    );
+
+    // Configuración de la solicitud POST
     curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array('Content-Type: application/json'));
+
+    // Se ejecuta el CURL y se almacena la respuesta
     $response = curl_exec($ch);
-    
-    if (curl_errno($ch)) {
-        echo 'Error de cURL: ' . curl_error($ch);
-    } elseif ($response === false) {
-        echo 'Error en la respuesta: La respuesta está vacía';
-    } else {
-        return json_decode($response, true);
+
+    // Se capturan los errores de curl
+    if(curl_errno($ch)){
+        $error_msg = 'Error de curl: ' . curl_error($ch); //Error de petición
+    }elseif ($response === false){
+        $error_msg = 'Error en la respuesta. Respuesta vacía';
+    }else{
+        // Decodifica la respuesta convirtiendo el JSON en un array
+        $response_data = json_decode($response, true);
+        if (isset($response_data['error'])) {
+            $error_msg = 'Error: ' . $response_data['error'];
+        } else {
+            $success_msg = 'Usuario registrado exitosamente';
+        }
     }
-    
+
+    // Cierra el CURL
     curl_close($ch);
-    return null;
-}
-
-$dataRegister = array(
-    'id_aficionado' => '123',
-    'username' => 'aficionado123',
-    'password' => 'password123',
-    'email' => 'aficionado123@example.com',
-    'birthdate' => '2000-01-01',
-    'url_avatar' => 'http://example.com/avatar.jpg'
-);
-$responseRegister = registerAficionado($dataRegister);
-print_r($responseRegister);
 ?>
-
-<h1>Registro de Aficionado</h1>
-    <form method="post" action="">
-        <label for="username">Nombre de usuario:</label>
-        <input type="text" id="username" name="username" required><br><br>
-
-        <label for="password">Contraseña:</label>
-        <input type="password" id="password" name="password" required><br><br>
-
-        <label for="email">Correo electrónico:</label>
-        <input type="email" id="email" name="email" required><br><br>
-
-        <label for="birthdate">Fecha de nacimiento:</label>
-        <input type="date" id="birthdate" name="birthdate" required><br><br>
-
-        <label for="avatar">URL del avatar:</label>
-        <input type="url" id="avatar" name="avatar"><br><br>
-
-        <button type="submit" name="register">Registrar</button>
-    </form>
+<body>
+    <!--Renderiza la respuesta-->
+    <div class="message">
+        <?php
+            if (isset($error_msg)) {
+                echo '<h1>' . $error_msg . '</h1>';
+            } elseif (isset($success_msg)) {
+                echo '<h1>' . $success_msg . '</h1>';
+            }
+        ?>
+    </div>
+</body>
+</html>
