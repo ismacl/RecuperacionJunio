@@ -1,10 +1,46 @@
-from django.shortcuts import render
-from django.http import JsonResponse, HttpResponse, HttpResponseNotFound
+from django.shortcuts import render, get_object_or_404
+from django.http import JsonResponse, HttpResponse, HttpResponseNotFound, HttpResponseBadRequest
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
-from django.contrib.auth.hashers import make_password
+from django.contrib.auth.hashers import make_password, check_password
+from datetime import datetime, timedelta
 from .models import Aficionados, Equipos, Contenido, Comentarios
 import json
+import jwt
+
+# Create your views here.
+
+SECRET_KEY = 'clavesegurisima'
+
+# Crear token
+
+def crear_token(user_id):
+	payload = {
+		'user_id':user_id,
+		'exp':datetime.utcnow() + timedelta(days=1),
+		'iat':datetime.utcnow()
+	}
+	token = jwt.encode(payload, SECRET_KEY, algorithm='HS256')
+	return token
+
+# Verificar token
+
+def verificar_token(request):
+	token = request.headers.get('SessionToken', None)
+
+	if not token:
+		return JsonResponse({'error': 'Token no encontrado'}, status=401), None
+
+	try:
+		if token.startswith('Bearer '):
+			token = token.split(' ')[1]
+
+		payload = jwt.decode(token,SECRET_KEY,algorithms=['HS256'])
+		return None, payload
+	except jwt.ExpiredSignatureError:
+		return JsonResponse({'error': 'Token expirado'}, status=401), None
+	except jwt.InvalidTokenError:
+		return JsonResponse({'error': 'Token invalido'}, status=401), None
 
 @csrf_exempt
 def crear_aficionado(request):
@@ -14,12 +50,12 @@ def crear_aficionado(request):
             data = json.loads(request.body)
 
             # Verificar si ya existe un usuario con el mismo email
-            if Usuario.objects.filter(email=data['email']).exists():
+            if nuevo_aficionado.objects.filter(email=data['email']).exists():
                 return HttpResponseConflict('Ya existe un usuario con ese email', content_type='text/plain')
 
             # Crear un nuevo aficionado
             with transaction.atomic():
-                nuevo_aficionado = Usuario(
+                nuevo_aficionado = Aficionados(
                     id_aficionado=data['id_aficionado'],
                     username=data['username'],
                     password=make_password(data['password']),
@@ -63,16 +99,16 @@ def login(request):
                 return HttpResponse('Contraseña incorrecta', status=401,  content_type='text/plain')
 
             # Generar un nuevo token de sesión y actualizar el usuario
-            nuevo_token_sesion = crear_token(id_aficionado)
-            usuario.Token_Sesion = nuevo_token_sesion
-            usuario.save()
+            nuevo_token_sesion = crear_token(aficionado)
+            aficionado.token_sesion = nuevo_token_sesion
+            aficionado.save()
 
             # Devolver la respuesta con el token de sesión
             datos_respuesta = {'Token_Sesion': nuevo_token_sesion}
             return JsonResponse(datos_respuesta, status=201)
 
-        except Usuario.DoesNotExist:
-            return HttpResponseUnauthorized('Usuario no encontrado', content_type='text/plain')
+        except aficionado.DoesNotExist:
+            return HttpResponseNotFound('Usuario no encontrado', content_type='text/plain')
 
         except KeyError:
             # Faltan parámetros en la solicitud
@@ -99,10 +135,10 @@ def logout(request):
                 return HttpResponseBadRequest('Falta el token de sesión en la solicitud', content_type='text/plain')
 
             # Buscar al aficionado con el token de sesión proporcionado
-            aficionado = Aficionados.objects.get(Token_Sesion=session_token)
+            aficionado = Aficionados.objects.get(Token_Sesion=Token_Sesion)
 
             # Limpiar el token de sesión del aficionado para cerrar la sesión
-            aficionado.Token_Sesion = None
+            aficionado.token_sesion = None
             aficionado.save()
 
             # Devolver una respuesta indicando que la sesión se ha cerrado correctamente
@@ -133,10 +169,9 @@ def username(request, username):
 
             # Obtener la información del perfil del aficionado
             perfil = {
-                'username': aficionado.UserName,
+                'username': aficionado.username,
                 'url_avatar': aficionado.url_avatar,
-                'description': aficionado.Description,
-                'equipos': aficionado.Equipos
+                'equipos': aficionado.id_equipo
             }
 
             return JsonResponse(perfil, status=200)
@@ -183,7 +218,7 @@ def crear_equipo(request):
                 return JsonResponse({'error': 'Faltan parámetros o son incorrectos'}, status=400)
 
             # Crear un nuevo equipo
-            nuevo_equipo = Equipo.objects.create(
+            nuevo_equipo = Equipos.objects.create(
                 nombre=data['equipo'],
                 liga=data['liga'],
                 pais=data['pais'],
@@ -216,7 +251,7 @@ def agregar_comentario(request):
                 return HttpResponseBadRequest('El aficionado o el contenido no existen', content_type='text/plain')
 
             # Crear el comentario
-            nuevo_comentario = Comentario(
+            nuevo_comentario = Comentarios(
                 id_aficionado=data['id_aficionado'],
                 id_contenido=data['id_contenido'],
                 comentario=data['comentario'],
@@ -249,11 +284,11 @@ def comentarios_contenido(request, id_contenido):
 
             # Preparar la lista de comentarios
             comentarios_info = [{
-                'id_comentario': comentario.id_Comentarios,
-                'id_aficionado': comentario.Id_aficionado.Id_aficionado,
-                'username': comentario.Id_aficionado.UserName,
-                'comentario': comentario.Comentario,
-                'fecha_comentario': comentario.Fecha_comentario,
+                'id_comentario': comentario.id_comentarios,
+                'id_aficionado': comentario.id_aficionado.id_aficionado,
+                'username': comentario.id_aficionado.username,
+                'comentario': comentario.comentario,
+                'fecha_comentario': comentario.fecha_comentario,
             } for comentario in comentarios]
 
             # Devolver la respuesta JSON con la lista de comentarios
@@ -333,7 +368,7 @@ def eliminar_contenido(request, id_contenido):
             return HttpResponseUnauthorized('No autorizado. Token de sesión inválido o no proporcionado.', content_type='text/plain')
 
         # Verificación del contenido
-        contenido = get_object_or_404(Contenido, pk=id_contenido, Id_aficionado=aficionado.Id_aficionado)
+        contenido = get_object_or_404(Contenido, pk=id_contenido, Id_aficionado=aficionado.id_aficionado)
 
         # Eliminación del contenido
         contenido.delete()
@@ -375,11 +410,11 @@ def buscar_equipos(request):
         equipos_list = []
         for equipo in equipos:
             equipos_list.append({
-                "equipo": equipo.Nombre,
-                "liga": equipo.Liga,
-                "pais": equipo.Pais,
-                "año_fundacion": equipo.Año_Fundacion,
-                "estadio": equipo.Estadio,
+                "equipo": equipo.nombre,
+                "liga": equipo.liga,
+                "pais": equipo.pais,
+                "año_fundacion": equipo.año_fundacion,
+                "estadio": equipo.estadio,
                 "url_equipo": equipo.url_equipo,
             })
 
