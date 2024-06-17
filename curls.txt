@@ -1,0 +1,43 @@
+crear aficionado
+
+curl -X POST http://localhost:8000/aficionado/ \
+     -H "Content-Type: application/json" \
+     -d '{
+        "id_aficionado": "1",
+        "username": "lis_gacia",
+        "password": "1234",
+        "gmail": "luis.gacia@example.com",
+        "birthdate": "1990-05-15",
+        "registerdate": "1991-05-15",
+        "id_equipo": "1",
+        "url_avatar": "https://cdn-icons-png.flaticon.com/512/4792/4792929.png"
+     }'
+
+Login
+
+curl -X POST http://localhost:8000/session/ \
+     -H "Content-Type: application/json" \
+     -d '{
+        "username": "lis_gacia",
+        "password": "1234"
+     }'
+
+Token sesion 
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTg2MjA3NzgsImlhdCI6MTcxODUzNDM3OH0.s4kDgkmMVzwIqgGe8wkJQJi4zbDC7yEPb0rkXlK-Wcs
+
+Logout
+curl -X PATCH http://localhost:8000/logout/ \
+     -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTg2MjA3NzgsImlhdCI6MTcxODUzNDM3OH0.s4kDgkmMVzwIqgGe8wkJQJi4zbDC7yEPb0rkXlK-Wcs"
+
+agregar comentario
+curl -X POST http://localhost:8000/agregar_comentario/ \
+     -H "Content-Type: application/json" \
+     -d '{
+    "id_comentarios":"8",
+    "id_aficionado":"1",
+    "id_contenido":"1",
+    "comentario":"loco",
+    "fecha_comentario": "1999-12-05"
+     }'
+
+eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoxLCJleHAiOjE3MTg2MjY1ODMsImlhdCI6MTcxODU0MDE4M30.mFhx92nXJJq1biv7po3N3wLLDgWqRduUSdM5tC_qRsQ
